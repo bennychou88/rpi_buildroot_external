@@ -1,0 +1,2 @@
+#source "$BR2_EXTERNAL_JASPIRADIO_PATH/package/python-pip/Config.in"
+
