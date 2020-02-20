@@ -1,12 +1,12 @@
 #!/bin/sh
 
 LED='/sys/class/leds/led0'
-CURR_STATION_STOR='./current_radio_station'
+CURR_STATION_STOR='/root/current_radio_station'
 DO_RADIO=true
-DO_BUTTONS=false
+DO_BUTTONS=true
 DO_LED=true
 
-SCAN_TIMEOUT=0.1
+SCAN_TIMEOUT=0.01
 LOG="logger -s -t jaspiradio.radio"
 #PINS= 11 12 13 15 16
 GPIOS="17 18 22 23 24"
@@ -91,6 +91,18 @@ while true; do
     # We want to be playing
     if [ "${CURR_STATION}" != "" ]; then
       TRIES=5
+
+      # Gonna start station
+      if $DO_LED; then
+        if [ "`mpc|grep -o \\\\[playing]`" != '[playing]' ] ||
+           [ "`mpc -f %file% current`" != "${CURR_STATION}" ]; then
+           echo timer > ${LED}/trigger
+           echo 20 > ${LED}/delay_on
+           echo 20 > ${LED}/delay_off
+           echo 1 > ${LED}/brightness
+        fi
+      fi
+
       while [ "`mpc|grep -o \\\\[playing]`" != '[playing]' ] ||
             [ "`mpc -f %file% current`" != "${CURR_STATION}" ]; do
         if [ "${TRIES}" -eq "0" ]; then
@@ -99,13 +111,6 @@ while true; do
         fi
         TRIES=$(( $TRIES - 1 ))
 
-        if $DO_LED; then
-          echo timer > ${LED}/trigger
-          echo 50 > ${LED}/delay_on
-          echo 100 > ${LED}/delay_off
-          echo 1 > ${LED}/brightness
-        fi
-
         echo Activating MPC
         mpc clear
         mpc add ${CURR_STATION}
@@ -113,7 +118,8 @@ while true; do
       done
 
       if ${DO_LED}; then
-        echo 0 > ${LED}/brightness
+        echo none > ${LED}/trigger
+        echo 1 > ${LED}/brightness
       fi
 
     #We want silence
@@ -122,6 +128,10 @@ while true; do
       if [ "`mpc|grep -o \\\\[playing]`" == '[playing]' ]; then
         echo Stopping MPC
         mpc stop
+        if ${DO_LED}; then
+          echo none > ${LED}/trigger
+          echo 0 > ${LED}/brightness
+        fi
       fi
     fi
   fi
