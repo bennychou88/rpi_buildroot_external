@@ -6,7 +6,7 @@ if [ -f ${BINARIES_DIR}/rpi-firmware/config.txt.orig ]; then
 fi
 
 patch -b -N ${BINARIES_DIR}/rpi-firmware/config.txt <<__EOF__
-@@ -18,3 +18,6 @@
+@@ -18,3 +18,8 @@
  gpu_mem_256=100
  gpu_mem_512=100
  gpu_mem_1024=100
