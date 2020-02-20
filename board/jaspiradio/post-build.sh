@@ -13,5 +13,7 @@ patch -b -N ${BINARIES_DIR}/rpi-firmware/config.txt <<__EOF__
 +
 +# Enable built-in audio
 +dtparam=audio=on
++dtparam=act_led_gpio=25
++dtparam=act_led_trigger=heartbeat
 
 __EOF__
