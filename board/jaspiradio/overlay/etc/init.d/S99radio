@@ -3,7 +3,7 @@
 start() {
         printf "Starting radio: "
         start-stop-daemon --start -m --quiet --background --exec /root/radio.sh --pidfile /var/run/radio.pid \
-                && echo "OK" || echo "FAIL"
+                && echo "OK@[`cat /proc/uptime`]" || echo "FAIL"
 }
 
 stop() {
