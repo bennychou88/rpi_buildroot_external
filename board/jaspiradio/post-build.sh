@@ -6,7 +6,7 @@ if [ -f ${BINARIES_DIR}/rpi-firmware/config.txt.orig ]; then
 fi
 
 patch -b -N ${BINARIES_DIR}/rpi-firmware/config.txt <<__EOF__
-@@ -18,3 +18,10 @@
+@@ -18,3 +18,14 @@
  gpu_mem_256=100
  gpu_mem_512=100
  gpu_mem_1024=100
@@ -17,4 +17,8 @@ patch -b -N ${BINARIES_DIR}/rpi-firmware/config.txt <<__EOF__
 +dtparam=act_led_trigger=heartbeat
 +
 +boot_delay=0
++
++#Requires bootcode.bin patch (UART=1)
++enable_uart=1
++
 __EOF__
