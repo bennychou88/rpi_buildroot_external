@@ -1,6 +1,6 @@
 #!/bin/sh
 
-ATTEMPTS=100
+ATTEMPTS=1000
 while [ ! -f /sys/class/net/$1/dev_id ] && [ "$ATTEMPTS" -gt "0" ]; do
   ATTEMPTS=$(( $ATTEMPTS - 1 ))
 done
