@@ -9,7 +9,7 @@ DO_LED=true
 SCAN_TIMEOUT=0.01
 LOG="logger -s -t jaspiradio.radio"
 #PINS= 11 12 13 15 16
-GPIOS="17 18 22 23 24"
+GPIOS="10 9 11 0 5"
 
 RADIO="radio1,http://icecast.vrtcdn.be/radio1-high.mp3
 radio2antwerpen,http://icecast.vrtcdn.be/ra2ant-high.mp3
