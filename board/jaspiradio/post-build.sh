@@ -6,13 +6,13 @@ if [ -f ${BINARIES_DIR}/rpi-firmware/config.txt.orig ]; then
 fi
 
 patch -b -N ${BINARIES_DIR}/rpi-firmware/config.txt <<__EOF__
-@@ -18,3 +18,14 @@
+@@ -18,3 +18,17 @@
  gpu_mem_256=100
  gpu_mem_512=100
  gpu_mem_1024=100
 +
 +# Enable built-in audio
-+dtparam=audio=on
++#dtparam=audio=on
 +dtparam=act_led_gpio=25
 +dtparam=act_led_trigger=heartbeat
 +
@@ -20,5 +20,8 @@ patch -b -N ${BINARIES_DIR}/rpi-firmware/config.txt <<__EOF__
 +
 +#Requires bootcode.bin patch (UART=1)
 +enable_uart=1
++
++#Enable hifiberry
++dtoverlay=hifiberry-dac
 +
 __EOF__
