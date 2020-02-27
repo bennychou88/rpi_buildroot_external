@@ -2,7 +2,7 @@
 
 start() {
         printf "Starting alsa: "
-        start-stop-daemon -S -x alsactl -- -b -e /var/run/alsa.pid -L rdaemon \
+        start-stop-daemon -S -x alsactl -- -b -e /var/run/alsa.pid -p 10 -L rdaemon \
           && echo "OK" || echo "FAIL"
 }
 
