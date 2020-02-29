@@ -9,13 +9,15 @@ DO_LED=true
 SCAN_TIMEOUT=0.01
 LOG="logger -s -t jaspiradio.radio"
 #PINS= 11 12 13 15 16
-GPIOS="10 9 11 0 5"
+GPIOS="10 9 11 6 13 0 5"
 
-RADIO="radio1,http://icecast.vrtcdn.be/radio1-high.mp3
-radio2antwerpen,http://icecast.vrtcdn.be/ra2ant-high.mp3
-klara,http://icecast.vrtcdn.be/klara-high.mp3
-stubru,http://icecast.vrtcdn.be/stubru-high.mp3
-mnm,http://icecast.vrtcdn.be/mnm-high.mp3"
+RADIO="station,radio1,http://icecast.vrtcdn.be/radio1-high.mp3
+station,radio2antwerpen,http://icecast.vrtcdn.be/ra2ant-high.mp3
+station,klara,http://icecast.vrtcdn.be/klara-high.mp3
+station,stubru,http://icecast.vrtcdn.be/stubru-high.mp3
+station,mnm,http://icecast.vrtcdn.be/mnm-high.mp3
+cmd,mpc,volume,+5
+cmd,mpc,volume,-5"
 
 if [ ! -f ${CURR_STATION_STOR} ]; then
   touch ${CURR_STATION_STOR}
@@ -66,22 +68,32 @@ while true; do
     #Find selected radio station
     for r in $RADIO; do
       if [ "$idx" -eq "$SELECTED" ]; then
-        STATION_NAME=`echo $r|cut -d , -f 1`
-        STATION_URL=`echo $r|cut -d , -f 2`
+        TYPE=`echo $r|cut -d , -f 1`
+        if [ "$TYPE" == "station" ]; then
+          STATION_NAME=`echo $r|cut -d , -f 2`
+          STATION_URL=`echo $r|cut -d , -f 3`
+          ${LOG} Acting on ${STATION_NAME}@${STATION_URL}
+          # Update file containing radio state
+          if [ "`cat ${CURR_STATION_STOR}`" != "${STATION_URL}" ]; then
+            echo Updating station URL to ${STATION_URL}
+            echo ${STATION_URL} > ${CURR_STATION_STOR}
+          else
+            echo Stopping station ${STATION_URL}
+            echo > ${CURR_STATION_STOR}
+          fi
+
+        elif [ "$TYPE" == "cmd" ]; then
+          COMMAND=`echo $r| cut -d , -f 2- | tr ',' ' '`
+          echo Executing command [$COMMAND]
+          mpc $COMMAND
+
+        else
+          echo Unknown line type [$TYPE]
+        fi
         break
       fi
       idx=$(( $idx + 2 ))
     done
-
-    ${LOG} Acting on ${STATION_NAME}@${STATION_URL}
-    # Update file containing radio state
-    if [ "`cat ${CURR_STATION_STOR}`" != "${STATION_URL}" ]; then
-      echo Updating station URL to ${STATION_URL}
-      echo ${STATION_URL} > ${CURR_STATION_STOR}
-    else
-      echo Stopping station ${STATION_URL}
-      echo > ${CURR_STATION_STOR}
-    fi
   fi
 
   # Make sure MPD state is up to date
