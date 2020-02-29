@@ -85,7 +85,7 @@ while true; do
         elif [ "$TYPE" == "cmd" ]; then
           COMMAND=`echo $r| cut -d , -f 2- | tr ',' ' '`
           echo Executing command [$COMMAND]
-          mpc $COMMAND
+          $COMMAND
 
         else
           echo Unknown line type [$TYPE]
