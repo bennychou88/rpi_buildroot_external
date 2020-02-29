@@ -1,6 +1,16 @@
 #!/bin/sh
 set +e
 
+if ! grep -qE '^dtoverlay=jaspiradio' "${BINARIES_DIR}/rpi-firmware/config.txt"; then
+	echo "Adding 'dtoverlay=jaspiradio' to config.txt"
+	cat << __EOF__ >> "${BINARIES_DIR}/rpi-firmware/config.txt"
+
+# Add jaspiradio button and LED config
+dtoverlay=jaspiradio
+__EOF__
+fi
+dtc -I dts -O dtb -o ${BINARIES_DIR}/rpi-firmware/overlays/jaspiradio.dtbo ${BR2_EXTERNAL_JASPIRADIO_PATH}/board/jaspiradio/jaspiradio.dts
+
 for arg in "$@"
 do
 	case "${arg}" in

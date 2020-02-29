@@ -3,7 +3,7 @@
 LED='/sys/class/leds/led0'
 CURR_STATION_STOR='/root/current_radio_station'
 DO_RADIO=true
-DO_BUTTONS=true
+DO_BUTTONS=false
 DO_LED=true
 
 SCAN_TIMEOUT=0.01

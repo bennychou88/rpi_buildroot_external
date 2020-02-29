@@ -1,0 +1,100 @@
+/dts-v1/;
+/plugin/;
+
+/ {
+  compatible = "brcm,bcm2708";
+
+  fragment@0 {
+    target = <&leds>;
+    __overlay__ {
+      led0 {
+        label = "station0";
+        gpios = <&gpio 22 1>;
+      };
+      led1 {
+        label = "station1";
+        gpios = <&gpio 23 1>;
+      };
+      led2 {
+        label = "station2";
+        gpios = <&gpio 24 1>;
+      };
+      led3 {
+        label = "station3";
+        gpios = <&gpio 25 1>;
+      };
+      led4 {
+        label = "station4";
+        gpios = <&gpio 27 1>;
+      };
+    };
+  };
+
+  fragment@1 {
+    target-path = "/soc";
+    __overlay__ {
+      keypad: keypad {
+        compatible = "gpio-keys";
+        #address-cells = <1>;
+        #size-cells = <0>;
+        pinctrl-names = "default";
+        pinctrl-0 = <&jaspiradio_pins>;
+
+        button@0 {
+          label = "station0";
+          linux,code = <0x100>;
+          gpios = <&gpio 0 1>;
+        };
+
+        button@5 {
+          label = "station1";
+          linux,code = <0x101>;
+          gpios = <&gpio 5 1>;
+        };
+
+        button@6 {
+          label = "station2";
+          linux,code = <0x102>;
+          gpios = <&gpio 6 1>;
+        };
+
+        button@9 {
+          label = "station3";
+          linux,code = <0x103>;
+          gpios = <&gpio 9 1>;
+        };
+
+        button@10 {
+          label = "station4";
+          linux,code = <0x104>;
+          gpios = <&gpio 10 1>;
+        };
+
+        button@11 {
+          label = "volup";
+          linux,code = <0x105>;
+          gpios = <&gpio 11 1>;
+        };
+
+        button@13 {
+          label = "voldn";
+          linux,code = <0x106>;
+          gpios = <&gpio 13 1>;
+        };
+
+      };
+    };
+  };
+
+  fragment@2 {
+    target = <&gpio>;
+    __overlay__ {
+      jaspiradio_pins: jaspiradio_pins {
+        brcm,pins = <0 5 6 9 10 11 13>;
+        brcm,function = <0>; //BCM2835_FSEL_GPIO_IN
+        brcm,pull = <2>; //BCM2835_PUD_UP
+      };
+    };
+  };
+
+};
