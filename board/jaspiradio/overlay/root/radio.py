@@ -58,11 +58,20 @@ class Radio():
         self.load_state()
 
         self.mpd_mux = Lock()
-        self.client = mpd.MPDClient(use_unicode=True)
-        self.client.connect("localhost", 6600)
+        self.connect()
 
         #timer_state initialised by ensure_state first call
         self.ensure_state(True, True)
+
+    def connect(self):
+        self.client = mpd.MPDClient(use_unicode=True)
+        self.client.connect("localhost", 6600)
+
+    def check_mpd_connection(self):
+        try:
+            self.client.ping()
+        except mpd.base.ConnectionError:
+            self.connect()
 
     def load_state(self):
         if not STATE_FILE.exists():
@@ -111,6 +120,7 @@ class Radio():
 
     def ensure_state(self, ensure_station, ensure_volume):
         self.mpd_mux.acquire()
+        self.check_mpd_connection()
         if ensure_station:
             if self.state['station']:
                 uri = self.state['station']['uri']
