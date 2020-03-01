@@ -1,101 +1,48 @@
 #!/bin/sh
-
-LED='/sys/class/leds/led0'
 CURR_STATION_STOR='/root/current_radio_station'
+CURR_CMD='/root/current_command'
+
+LOG="logger -s -t jaspiradio.radio"
+
+ACTIONS="0x100,station,radio1,http://icecast.vrtcdn.be/radio1-high.mp3
+0x101,station,radio2antwerpen,http://icecast.vrtcdn.be/ra2ant-high.mp3
+0x102,station,klara,http://icecast.vrtcdn.be/klara-high.mp3
+0x103,station,stubru,http://icecast.vrtcdn.be/stubru-high.mp3
+0x104,station,mnm,http://icecast.vrtcdn.be/mnm-high.mp3
+0x105,cmd,volume_up
+0x106,cmd,volume_down"
+
+
 DO_RADIO=true
-DO_BUTTONS=false
+DO_BUTTONS=true
 DO_LED=true
 
-SCAN_TIMEOUT=0.01
-LOG="logger -s -t jaspiradio.radio"
-#PINS= 11 12 13 15 16
-GPIOS="10 9 11 6 13 0 5"
+LEDS=$(ls -d1 /sys/class/leds/station*)
 
-RADIO="station,radio1,http://icecast.vrtcdn.be/radio1-high.mp3
-station,radio2antwerpen,http://icecast.vrtcdn.be/ra2ant-high.mp3
-station,klara,http://icecast.vrtcdn.be/klara-high.mp3
-station,stubru,http://icecast.vrtcdn.be/stubru-high.mp3
-station,mnm,http://icecast.vrtcdn.be/mnm-high.mp3
-cmd,mpc,volume,+5
-cmd,mpc,volume,-5"
 
 if [ ! -f ${CURR_STATION_STOR} ]; then
   touch ${CURR_STATION_STOR}
 fi
 
-#Turn off LED
-if $DO_LED; then
-  echo 0 > ${LED}/brightness
+if [ ! -f ${CURR_CMD} ]; then
+  touch ${CURR_CMD}
 fi
 
-#Enable buttons and generate button read command
-GPIO_STATE_CMD="cat "
-for i in $GPIOS; do
-  if $DO_BUTTONS; then
-    echo Enabling GPIO $i;
-    echo $i > /sys/class/gpio/export
-    echo in > /sys/class/gpio/gpio$i/direction
-    GPIO_STATE_CMD="${GPIO_STATE_CMD} /sys/class/gpio/gpio$i/value"
-  else
-    echo Faking GPIO $i;
-    GPIO_STATE_CMD="${GPIO_STATE_CMD} ./gpio_$i"
-    echo 0 > ./gpio_$i
-  fi
-done
-
-
-# Check buttons and modify state as needed
-GPIO_STATE=`${GPIO_STATE_CMD}`
-while true; do
-  GPIO_STATE_PREV=$GPIO_STATE
-  GPIO_STATE=`${GPIO_STATE_CMD}`
-
-  # Check button state and compute selected stream
-  SELECTED=-1
-  idx=0
-  for i in $GPIOS; do
-    if [ "${GPIO_STATE:$idx:1}" -ne "${GPIO_STATE_PREV:$idx:1}" ]; then
-      if [ "${GPIO_STATE:$idx:1}" -eq "0" ]; then
-        SELECTED=$idx
-      fi
-    fi
-    idx=$(( $idx + 2 ))
+#Turn off LED
+if $DO_LED; then
+  for l in $LED; do
+    echo 0 > ${l}/brightness
   done
+fi
 
-  # We have a button push, act on it
-  if [ "$SELECTED" -ge "0" ]; then
-    idx=0
-    #Find selected radio station
-    for r in $RADIO; do
-      if [ "$idx" -eq "$SELECTED" ]; then
-        TYPE=`echo $r|cut -d , -f 1`
-        if [ "$TYPE" == "station" ]; then
-          STATION_NAME=`echo $r|cut -d , -f 2`
-          STATION_URL=`echo $r|cut -d , -f 3`
-          ${LOG} Acting on ${STATION_NAME}@${STATION_URL}
-          # Update file containing radio state
-          if [ "`cat ${CURR_STATION_STOR}`" != "${STATION_URL}" ]; then
-            echo Updating station URL to ${STATION_URL}
-            echo ${STATION_URL} > ${CURR_STATION_STOR}
-          else
-            echo Stopping station ${STATION_URL}
-            echo > ${CURR_STATION_STOR}
-          fi
+if $DO_BUTTONS; then
+  echo Starting button monitor
+  /root/handle_buttons.py &
+  echo monitor started
+fi
 
-        elif [ "$TYPE" == "cmd" ]; then
-          COMMAND=`echo $r| cut -d , -f 2- | tr ',' ' '`
-          echo Executing command [$COMMAND]
-          $COMMAND
-
-        else
-          echo Unknown line type [$TYPE]
-        fi
-        break
-      fi
-      idx=$(( $idx + 2 ))
-    done
-  fi
-
+# monitor state
+while true; do
   # Make sure MPD state is up to date
   if $DO_RADIO; then
     CURR_STATION=`cat ${CURR_STATION_STOR}`
@@ -148,5 +95,5 @@ while true; do
     fi
   fi
 
-  sleep ${SCAN_TIMEOUT}
+  sleep 0.1
 done
