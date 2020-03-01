@@ -22,23 +22,35 @@ STATE_STORAGE_INTERVAL=1
 REPEAT_DELAY_INIT=0.5
 REPEAT_DELAY=0.01
 
+STATE_FILE=Path('/root/radio_state.json')
+STATE_DEFAULT={
+    'station': None,
+    'volume': 50
+}
+
 class VolumeControl(dict):
     def __init__(self, name, delta):
         self['name']  = name
         self['delta'] = delta
+        self.timer = None
 
     def handle_key_event(self, radio, value):
         if value:
             radio.update_state(volume_delta = self['delta'])
             self.repeating=True
-            Timer(REPEAT_DELAY_INIT, self.repeat, (radio, )).start()
+            self.timer = Timer(REPEAT_DELAY_INIT, self.repeat, (radio, ))
+            self.timer.start()
         else:
+            if self.timer:
+                self.timer.cancel()
+                self.timer = None
             self.repeating=False
 
     def repeat(self, radio):
         radio.update_state(volume_delta = self['delta'])
         if self.repeating:
-            Timer(REPEAT_DELAY, self.repeat, (radio, )).start()
+            self.timer = Timer(REPEAT_DELAY, self.repeat, (radio, ))
+            self.timer.start()
 
 class Radio():
     def __init__(self, actions):
@@ -51,7 +63,6 @@ class Radio():
 
         #timer_state initialised by ensure_state first call
         self.ensure_state(True, True)
-        Timer(STATE_STORAGE_INTERVAL, self.store_state, ()).start()
 
     def load_state(self):
         if not STATE_FILE.exists():
@@ -66,7 +77,6 @@ class Radio():
     def store_state(self):
         with open(STATE_FILE, 'w') as f:
             json.dump(self.state, f)
-        Timer(STATE_STORAGE_INTERVAL, self.store_state, ()).start()
 
     def reset_state(self):
         print("Creating state file [{}] with default state".format(STATE_FILE))
@@ -93,6 +103,9 @@ class Radio():
             else:
                 self.state['volume'] += volume_delta
             volume_changed = curvol != self.state['volume']
+
+        if volume_changed or station_changed:
+            self.store_state()
 
         self.ensure_state(station_changed, volume_changed)
 
@@ -136,12 +149,6 @@ ACTIONS = {
 #Commands
     0x105 : VolumeControl('volume up',   +1),
     0x106 : VolumeControl('volume down', -1),
-}
-
-STATE_FILE=Path('/root/radio_state.json')
-STATE_DEFAULT={
-    'station': None,
-    'volume': 50
 }
 
 if __name__=='__main__':
